@@ -1,4 +1,4 @@
-// CLI entry: the staged implementation lives in lib-main.ts.
-import { main } from './lib-main.ts';
+// Hand off to the staged radar implementation in lib-main.ts.
+import { main as runRadar } from './lib-main.ts';
 
-main();
+runRadar();
