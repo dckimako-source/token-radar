@@ -4,16 +4,14 @@
 // shows is in data.js, and the page recomputes the model from the same figures the board carries.
 //
 // File map:
-//   1. App context ......... payload, mount point and mutable UI state
-//   2. Format .............. number, percentage, age and multiplier display
-//   3. ScoreModel .......... implied-value model mirrored from lib/model.ts
-//   4. FarmPlan ............ per-protocol farm steps mirrored from lib/model.ts
-//   5. Dom ................. the small element builder every view uses
-//   6. UrlState ............ filters and selection serialized into the hash
-//   7. Selection ........... filtering and sorting of board rows
-//   8. Detail .............. the per-protocol drawer
-//   9. View ................ header, lede, stats, controls, tables and model panel
-//  10. Bootstrap ........... initial render and global key handling
+//   1. App context ......... payload, mount point, UI state and the util.js helpers
+//   2. ScoreModel .......... implied-value model mirrored from lib/model.ts
+//   3. FarmPlan ............ per-protocol farm steps mirrored from lib/model.ts
+//   4. UrlState ............ filters and selection serialized into the hash
+//   5. Selection ........... filtering and sorting of board rows
+//   6. Detail .............. the per-protocol drawer
+//   7. View ................ header, lede, stats, controls, tables and model panel
+//   8. Bootstrap ........... initial render and global key handling
 
 (function () {
   'use strict';
@@ -26,39 +24,11 @@
 
   var app = document.getElementById('board');
   var state = { q: '', category: 'all', chain: 'all', tab: 'pre-token', watch: false, sort: 'implied', dir: -1, selected: null };
+  var Format = window.RadarUtil.Format;
+  var el = window.RadarUtil.el;
 
   // ============================================================
-  // 2. Format — display-only helpers
-  // ============================================================
-  var Format = (function () {
-    var usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-
-    function money(n) {
-      if (n === null || n === undefined || !isFinite(n)) return 'n/a';
-      if (Math.abs(n) >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
-      if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
-      if (Math.abs(n) >= 1e3) return '$' + Math.round(n / 1e3) + 'K';
-      return usd.format(n);
-    }
-
-    function percent(n) {
-      if (n === null || n === undefined || !isFinite(n)) return 'n/a';
-      return (n > 0 ? '+' : '') + n.toFixed(2) + '%';
-    }
-
-    function age(days) {
-      if (days === null || days === undefined) return 'unknown';
-      if (days >= 365) return (days / 365).toFixed(1) + 'y';
-      return Math.max(0, Math.round(days)) + 'd';
-    }
-
-    function multiple(n) { return (Math.round(n * 1000) / 1000).toFixed(3); }
-
-    return { money: money, percent: percent, age: age, multiple: multiple };
-  })();
-
-  // ============================================================
-  // 3. ScoreModel — radar-2, mirrored from lib/model.ts
+  // 2. ScoreModel — radar-2, mirrored from lib/model.ts
   // ============================================================
   // The page recomputes every row from the snapshot figures the board carries and checks the number
   // board.json carries, so the page's code and the board's data are visibly the same arithmetic.
@@ -92,7 +62,7 @@
   })();
 
   // ============================================================
-  // 4. FarmPlan — mirrored from lib/model.ts
+  // 3. FarmPlan — mirrored from lib/model.ts
   // ============================================================
   // Category, chains, TVL and age decide the action, the capital, the hold, the gas and every step.
   // No protocol name is special-cased.
@@ -189,31 +159,7 @@
   })();
 
   // ============================================================
-  // 5. Dom — element builder
-  // ============================================================
-  function el(tag, attrs) {
-    var node = document.createElement(tag);
-    if (attrs) {
-      Object.keys(attrs).forEach(function (k) {
-        if (k === 'class') node.className = attrs[k];
-        else if (k === 'text') node.textContent = attrs[k];
-        else if (k === 'html') node.innerHTML = attrs[k];
-        else if (k.slice(0, 2) === 'on') node.addEventListener(k.slice(2), attrs[k]);
-        else if (attrs[k] !== null && attrs[k] !== undefined) node.setAttribute(k, attrs[k]);
-      });
-    }
-    for (var i = 2; i < arguments.length; i++) {
-      var child = arguments[i];
-      if (child === null || child === undefined) continue;
-      if (Array.isArray(child)) child.forEach(function (c) { if (c) node.appendChild(c); });
-      else if (typeof child === 'string') node.appendChild(document.createTextNode(child));
-      else node.appendChild(child);
-    }
-    return node;
-  }
-
-  // ============================================================
-  // 6. UrlState — filters and selection in the location hash
+  // 4. UrlState — filters and selection in the location hash
   // ============================================================
   var UrlState = (function () {
     function read() {
@@ -252,7 +198,7 @@
   })();
 
   // ============================================================
-  // 7. Selection — filtering and sorting
+  // 5. Selection — filtering and sorting
   // ============================================================
   var Selection = (function () {
     function filtered() {
@@ -286,7 +232,7 @@
   })();
 
   // ============================================================
-  // 8. Detail — the per-protocol drawer
+  // 6. Detail — the per-protocol drawer
   // ============================================================
   var Detail = (function () {
     var dialog = el('dialog', { class: 'detail', id: 'detail', 'aria-labelledby': 'detail-title' });
@@ -365,7 +311,7 @@
   })();
 
   // ============================================================
-  // 9. View — the page's visual sections
+  // 7. View — the page's visual sections
   // ============================================================
   var View = (function () {
     function buildHeader() {
@@ -562,7 +508,7 @@
   })();
 
   // ============================================================
-  // 10. Bootstrap — assemble the shell and wire global keys
+  // 8. Bootstrap — assemble the shell and wire global keys
   // ============================================================
   function render() {
     app.textContent = '';
