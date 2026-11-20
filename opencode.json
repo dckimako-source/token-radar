@@ -1,18 +1,19 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "provider": {
-    "numes": {
+    "nous": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Numes",
+      "name": "Nous Portal",
       "options": {
-        "baseURL": "https://api.numes.ai/api/v1",
-        "apiKey": "sk-numes-v1-c7be55dd82c7e481563d128c9bb43fcd2bde188522f407451d0aa2df59b8c029"
+        "baseURL": "http://127.0.0.1:8787/v1",
+        "apiKey": "sk-local-proxy"
       },
       "models": {
-        "deepseek/deepseek-v4.1-flash:free": { "name": "DS41F free" },
-        "z-ai/glm-5.3-flash:free": { "name": "GLM53F free" }
+        "qwen/qwen4-max:free": {
+          "name": "Qwen4Max free"
+        }
       }
     }
   },
-  "model": "numes/deepseek/deepseek-v4.1-flash:free"
+  "model": "nous/qwen/qwen4-max:free"
 }
