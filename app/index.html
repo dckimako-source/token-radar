@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Leonida Legends — GTA 6 Trophy Guide &amp; Tracker</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <p class="eyebrow">Unofficial fan tracker</p>
+    <h1>Leonida Legends — GTA 6 Trophy Guide &amp; Tracker</h1>
+  </div>
+  <div class="progress-panel">
+    <div class="progress-heading">
+      <span id="progress-text">0/55 earned</span>
+      <span class="progress-note">Platinum progress</span>
+    </div>
+    <div class="progress-track" id="progress-bar" role="progressbar" aria-label="Trophies earned" aria-valuemin="0" aria-valuemax="55" aria-valuenow="0">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+    <ul class="grade-tally" aria-label="Trophies earned by grade">
+      <li><span class="grade-badge grade-platinum">Platinum</span><span id="count-platinum">0</span></li>
+      <li><span class="grade-badge grade-gold">Gold</span><span id="count-gold">0</span></li>
+      <li><span class="grade-badge grade-silver">Silver</span><span id="count-silver">0</span></li>
+      <li><span class="grade-badge grade-bronze">Bronze</span><span id="count-bronze">0</span></li>
+    </ul>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" aria-label="Trophy filters and progress controls">
+    <section class="sidebar-section" aria-labelledby="filter-heading">
+      <h2 id="filter-heading">Filter trophies</h2>
+      <div class="filters" role="group" aria-label="Filter by trophy type">
+        <button class="filter-btn" type="button" data-kind="all" aria-pressed="true">All</button>
+        <button class="filter-btn" type="button" data-kind="story" aria-pressed="false">Story</button>
+        <button class="filter-btn" type="button" data-kind="missable" aria-pressed="false">Missable</button>
+        <button class="filter-btn" type="button" data-kind="collectibles" aria-pressed="false">Collectibles</button>
+        <button class="filter-btn" type="button" data-kind="activities" aria-pressed="false">Activities</button>
+        <button class="filter-btn" type="button" data-kind="misc" aria-pressed="false">Misc</button>
+      </div>
+    </section>
+
+    <label class="field" for="search">
+      <span>Search</span>
+      <input id="search" type="search" placeholder="Trophy name or description" autocomplete="off">
+    </label>
+
+    <label class="check-row" for="spoiler-toggle">
+      <input id="spoiler-toggle" type="checkbox">
+      <span>Hide story trophies until earned</span>
+    </label>
+
+    <div class="sidebar-actions">
+      <button class="btn btn-primary" id="export-btn" type="button">Export progress</button>
+      <button class="btn" id="import-btn" type="button">Import progress</button>
+      <input class="visually-hidden" id="import-file" type="file" accept="application/json,.json" aria-label="Choose a progress file to import">
+      <button class="btn btn-quiet" id="reset-btn" type="button">Reset progress</button>
+    </div>
+
+    <section class="sidebar-summary" aria-labelledby="summary-heading">
+      <h2 id="summary-heading">Your progress</h2>
+      <p class="summary-percent" id="summary-percent">0%</p>
+      <p class="summary-counts">
+        <span><strong id="summary-earned">0</strong> earned</span>
+        <span><strong id="summary-remaining">55</strong> remaining</span>
+        <span>of <strong id="summary-total">55</strong></span>
+      </p>
+    </section>
+  </aside>
+
+  <main class="main" id="main-content">
+    <nav class="view-tabs" role="tablist" aria-label="Guide views">
+      <button class="tab-btn" id="tab-trophies" type="button" role="tab" aria-selected="true" aria-controls="view-trophies" data-view="trophies">Trophies</button>
+      <button class="tab-btn" id="tab-roadmap" type="button" role="tab" aria-selected="false" aria-controls="view-roadmap" data-view="roadmap">Roadmap</button>
+    </nav>
+
+    <section id="view-trophies" role="tabpanel" aria-labelledby="tab-trophies">
+      <div class="view-heading">
+        <div>
+          <p class="eyebrow">The full list</p>
+          <h2>All 55 trophies</h2>
+        </div>
+        <p class="view-hint">Tick a trophy to track it. Select a row for the guide.</p>
+      </div>
+
+      <div class="trophy-layout">
+        <ul class="trophy-list" id="trophy-list" aria-label="Trophy checklist"></ul>
+
+        <aside class="trophy-detail" id="trophy-detail" aria-label="Trophy details" aria-live="polite">
+          <p class="detail-empty" id="detail-empty">Select a trophy to see its official description, guide, sources, and missable status.</p>
+          <article id="detail-content" hidden>
+            <div class="detail-heading">
+              <span class="grade-badge" id="detail-grade">Bronze</span>
+              <span class="missable" id="detail-missable" hidden>Missable</span>
+            </div>
+            <h2 id="detail-name"></h2>
+            <p class="detail-description" id="detail-description"></p>
+            <section class="detail-section">
+              <h3>Guide</h3>
+              <div id="detail-guide"></div>
+            </section>
+            <section class="detail-section">
+              <h3>Sources</h3>
+              <ul class="detail-sources" id="detail-sources"></ul>
+            </section>
+          </article>
+        </aside>
+      </div>
+    </section>
+
+    <section id="view-roadmap" role="tabpanel" aria-labelledby="tab-roadmap" hidden>
+      <div class="view-heading">
+        <div>
+          <p class="eyebrow">The long way around</p>
+          <h2>Roadmap to the Platinum</h2>
+        </div>
+        <p class="view-hint">A stage-by-stage plan built for a clean single playthrough.</p>
+      </div>
+      <div class="roadmap-stages" id="roadmap-stages"></div>
+    </section>
+  </main>
+</div>
+
+<script src="app.js" type="module"></script>
+</body>
+</html>
