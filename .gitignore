@@ -1,0 +1,7 @@
+node_modules/
+out/
+out2/
+outA/
+outB/
+*.log
+opencode.json
