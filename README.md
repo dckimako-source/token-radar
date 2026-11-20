@@ -23,8 +23,8 @@ Nvidia probe), each with a region tag and pictogram. Two runs write byte-identic
 ## Badges
 
 [![Competition](https://make.fun/badge/news-image-20261120.svg)](https://make.fun/c/news-image-20261120)
-[![Rank](https://make.fun/badge/news-image-20261120/dckimako-source/token-radar/rank.svg)](https://make.fun/c/news-image-20261120)
-[![Reward](https://make.fun/badge/news-image-20261120/dckimako-source/token-radar/reward.svg)](https://make.fun/c/news-image-20261120)
+[![Rank](https://make.fun/badge/news-image-20261120/dckimako-source/news-image-20261120/rank.svg)](https://make.fun/c/news-image-20261120)
+[![Reward](https://make.fun/badge/news-image-20261120/dckimako-source/news-image-20261120/reward.svg)](https://make.fun/c/news-image-20261120)
 
 ## License
 
