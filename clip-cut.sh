@@ -7,7 +7,9 @@
 # h264/yuv420p + aac render -> ffprobe verification -> preview frame.
 #
 # Usage:   YTDLP_COOKIES_FILE=/path/to/cookies.txt [CUT_START=00:01:00] ./clip-cut.sh
+#          DRY_RUN=1 ./clip-cut.sh   (print the yt-dlp/ffmpeg commands, run nothing)
 # Env:     YTDLP_COOKIES_FILE  required; Netscape cookies.txt from a logged-in browser
+#          DRY_RUN            optional; 1 = print each yt-dlp/ffmpeg command instead of running it
 #          CUT_START          in-point in the VOD, HH:MM:SS (or plain seconds), default 00:01:00
 #          CUT_OFFSET         seconds into the fetched 60s window where the best 20s starts, default 0
 # Outputs: source.mp4 (60s fetch), clip.mp4 (20s final), preview.jpg (hook frame)
@@ -19,6 +21,19 @@ set -euo pipefail
 
 # Always work in the repository directory so every artifact lands here.
 cd "$(dirname "$0")"
+
+DRY_RUN="${DRY_RUN:-0}"
+
+# run — execute a pipeline command, or just print it when DRY_RUN=1.
+run() {
+  if [[ "$DRY_RUN" == "1" ]]; then
+    printf 'DRY_RUN:'
+    printf ' %q' "$@"
+    printf '\n'
+  else
+    "$@"
+  fi
+}
 
 # --- Fixed creative parameters (from CLIP-PLAN.md) ---------------------------
 VOD_ID="xMXp80Cntxw"          # TGG "GTA 6 LAUNCH STREAM!" — launch-day first reaction
@@ -34,23 +49,26 @@ PREVIEW="preview.jpg"
 # --- Step 1: cookies gate -----------------------------------------------------
 # This machine's IP is bot-blocked by YouTube: yt-dlp downloads fail without
 # cookies from a logged-in browser. Refuse to run (and burn retries) without them.
-if [[ -z "${YTDLP_COOKIES_FILE:-}" ]]; then
-  echo "ERROR: YTDLP_COOKIES_FILE is not set." >&2
-  echo "YouTube downloads from this machine are IP-blocked without cookies." >&2
-  echo "Export YTDLP_COOKIES_FILE pointing at a Netscape-format cookies.txt" >&2
-  echo "from a logged-in browser, then re-run this script." >&2
-  exit 1
-fi
-# The cookie file must actually exist and be readable, or yt-dlp would fail anyway.
-if [[ ! -r "$YTDLP_COOKIES_FILE" ]]; then
-  echo "ERROR: YTDLP_COOKIES_FILE='$YTDLP_COOKIES_FILE' is not a readable file." >&2
-  exit 1
-fi
+# DRY_RUN only prints commands, so it needs neither cookies nor installed tools.
+if [[ "$DRY_RUN" != "1" ]]; then
+  if [[ -z "${YTDLP_COOKIES_FILE:-}" ]]; then
+    echo "ERROR: YTDLP_COOKIES_FILE is not set." >&2
+    echo "YouTube downloads from this machine are IP-blocked without cookies." >&2
+    echo "Export YTDLP_COOKIES_FILE pointing at a Netscape-format cookies.txt" >&2
+    echo "from a logged-in browser, then re-run this script." >&2
+    exit 1
+  fi
+  # The cookie file must actually exist and be readable, or yt-dlp would fail anyway.
+  if [[ ! -r "$YTDLP_COOKIES_FILE" ]]; then
+    echo "ERROR: YTDLP_COOKIES_FILE='$YTDLP_COOKIES_FILE' is not a readable file." >&2
+    exit 1
+  fi
 
-# Sanity-check the tools the pipeline needs before touching the network.
-for tool in yt-dlp ffmpeg ffprobe; do
-  command -v "$tool" >/dev/null 2>&1 || { echo "ERROR: $tool not found in PATH." >&2; exit 1; }
-done
+  # Sanity-check the tools the pipeline needs before touching the network.
+  for tool in yt-dlp ffmpeg ffprobe; do
+    command -v "$tool" >/dev/null 2>&1 || { echo "ERROR: $tool not found in PATH." >&2; exit 1; }
+  done
+fi
 
 # --- Step 2: fetch the 60s source window with yt-dlp --------------------------
 # Convert CUT_START (HH:MM:SS, or plain seconds) to a seconds offset so we can
@@ -66,8 +84,8 @@ end_sec=$(( start_sec + FETCH_LEN ))
 # Best video at height<=1080 plus best audio, merged into mp4. Only the chosen
 # 60s section is downloaded; --force-keyframes-at-cuts makes the section edges
 # frame-accurate instead of snapping to the nearest keyframe.
-yt-dlp \
-  --cookies "$YTDLP_COOKIES_FILE" \
+run yt-dlp \
+  --cookies "${YTDLP_COOKIES_FILE:-}" \
   --no-playlist \
   -f 'bestvideo[height<=1080]+bestaudio/best[height<=1080]' \
   --merge-output-format mp4 \
@@ -126,7 +144,7 @@ VF+=":x=(w-text_w)/2:y=1350:enable='between(t,${PITCH_START},${CLIP_LEN})'"
 # -ss before -i seeks fast; re-encoding makes the cut frame-accurate. Audio is
 # mapped optionally ('?') so a silent source still renders. h264 yuv420p + aac
 # is the YouTube/Shorts-safe combination; +faststart puts the moov atom first.
-ffmpeg -y \
+run ffmpeg -y \
   -ss "$CUT_OFFSET" -t "$CLIP_LEN" -i "$SOURCE" \
   -map 0:v:0 -map '0:a:0?' \
   -vf "$VF" \
@@ -136,24 +154,48 @@ ffmpeg -y \
   "$OUT"
 
 # --- Step 5: verify the render with ffprobe -----------------------------------
-# Must be exactly 1080x1920 (vertical Short) and under 60s (Shorts limit).
-dims="$(ffprobe -v error -select_streams v:0 \
-  -show_entries stream=width,height -of csv=s=x:p=0 "$OUT")"
-if [[ "$dims" != "1080x1920" ]]; then
-  echo "ERROR: $OUT is ${dims}, expected 1080x1920." >&2
-  exit 1
+# Must be exactly 1080x1920 (vertical Short) and strictly under 60s: a duration
+# of 60s or more fails, as do probe errors or missing/garbled stream metadata.
+# DRY_RUN renders nothing, so there is no file to probe.
+if [[ "$DRY_RUN" == "1" ]]; then
+  echo "DRY_RUN: skipping ffprobe verification (nothing was rendered)."
+else
+  if ! dims="$(ffprobe -v error -select_streams v:0 \
+    -show_entries stream=width,height -of csv=s=x:p=0 "$OUT")"; then
+    echo "ERROR: ffprobe could not read video stream dimensions from $OUT." >&2
+    exit 1
+  fi
+  if [[ "$dims" != "1080x1920" ]]; then
+    echo "ERROR: $OUT is ${dims:-<empty>}, expected exactly 1080x1920 (width x height)." >&2
+    exit 1
+  fi
+  if ! dur="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$OUT")"; then
+    echo "ERROR: ffprobe could not read duration from $OUT." >&2
+    exit 1
+  fi
+  if ! [[ "$dur" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+    echo "ERROR: $OUT duration '${dur:-<empty>}' is not a valid number of seconds." >&2
+    exit 1
+  fi
+  if ! awk -v d="$dur" 'BEGIN { exit !(d > 0) }'; then
+    echo "ERROR: $OUT duration ${dur}s is not positive." >&2
+    exit 1
+  fi
+  if ! awk -v d="$dur" 'BEGIN { exit !(d < 60) }'; then
+    echo "ERROR: $OUT duration ${dur}s is 60s or more; Shorts requires strictly under 60s." >&2
+    exit 1
+  fi
+  echo "OK: $OUT is ${dims}, ${dur}s (< 60s)."
 fi
-dur="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$OUT")"
-if ! awk -v d="$dur" 'BEGIN { exit !(d > 0 && d < 60) }'; then
-  echo "ERROR: $OUT duration ${dur}s is not under 60s." >&2
-  exit 1
-fi
-echo "OK: $OUT is ${dims}, ${dur}s (< 60s)."
 
 # --- Step 6: extract a preview frame ------------------------------------------
 # Grab a frame at t=1s so the hook text ("GTA 6 IS OUT") is visible for a
 # quick eyeball check of crop, text placement and safe areas.
-ffmpeg -y -ss 1 -i "$OUT" -frames:v 1 -q:v 2 "$PREVIEW"
+run ffmpeg -y -ss 1 -i "$OUT" -frames:v 1 -q:v 2 "$PREVIEW"
 
 # Done: report the artifacts the upload step (AGENT.md step 5) needs.
-echo "Rendered: $OUT ($(du -h "$OUT" | cut -f1)), preview: $PREVIEW, source: $SOURCE"
+if [[ "$DRY_RUN" == "1" ]]; then
+  echo "DRY_RUN: no artifacts written; re-run without DRY_RUN to render."
+else
+  echo "Rendered: $OUT ($(du -h "$OUT" | cut -f1)), preview: $PREVIEW, source: $SOURCE"
+fi
