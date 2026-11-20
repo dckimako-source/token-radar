@@ -46,12 +46,12 @@ function roundRect(x, y, w, h, r, c) {
   fillCircle(x + w - r, y + h - r, r, c);
 }
 
-function fillSparkle(cx, cy, r, c) {
+function fillSparkle(cx, cy, r, c, k = 0.55) {
   const x0 = Math.max(0, Math.floor(cx - r)), x1 = Math.min(W - 1, Math.ceil(cx + r));
   const y0 = Math.max(0, Math.floor(cy - r)), y1 = Math.min(H - 1, Math.ceil(cy + r));
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const u = Math.abs(x - cx) / r, v = Math.abs(y - cy) / r;
-    if (Math.pow(u, 0.55) + Math.pow(v, 0.55) <= 1) px(x, y, c);
+    if (Math.pow(u, k) + Math.pow(v, k) <= 1) px(x, y, c);
   }
 }
 
@@ -247,6 +247,9 @@ function sky() {
     const s = rnd() > 0.85 ? 2 : 1;
     fillRect(x, y, s, s, [255, 255, 255, a]);
   }
+  for (const [x, y] of [[96, 36], [236, 60], [420, 32], [608, 56], [788, 34], [936, 64], [168, 176], [864, 180]]) {
+    fillRect(x, y, 2, 2, WHITE);
+  }
 }
 
 function palm(bx, by, tx, ty) {
@@ -307,8 +310,8 @@ function ghost() {
   fillCircle(cx, 596, 54, WHITE);
   fillRect(cx - 54, 596, 108, 82, WHITE);
   for (const dx of [-36, 0, 36]) fillCircle(cx + dx, 678, 18, WHITE);
-  fillSparkle(cx - 22, 592, 13, BLACK);
-  fillSparkle(cx + 22, 592, 13, BLACK);
+  fillSparkle(cx - 22, 592, 16, BLACK, 0.8);
+  fillSparkle(cx + 22, 592, 16, BLACK, 0.8);
   fillCircle(942, 648, 17, BLACK);
   fillCircle(942, 648, 13, WHITE);
   fillCircle(960, 628, 24, BLACK);
